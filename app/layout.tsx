@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "FilmSim 35mm",
   description:
-    "Камера с процедурной симуляцией 35-мм плёнки — без загрузки фотографий.",
+    "A camera with procedural 35 mm film simulation and no photo uploads.",
   other: {
     "codex-preview": "development",
   },
@@ -28,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru">
+    <html lang="en">
       <body>{children}</body>
     </html>
   );
