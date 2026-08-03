@@ -66,7 +66,7 @@ const STOCKS: Array<{
   note: string;
   iso: number;
 }> = [
-  { id: "gold-200", name: "Kodak Gold 200", note: "C-41 · тёплый насыщенный", iso: 200 },
+  { id: "gold-200", name: "Kodak Gold 200", note: "C-41 · warm, saturated", iso: 200 },
   { id: "tx400", name: "Kodak TX400", note: "TRI-X · D-76", iso: 400 },
 ];
 
@@ -84,7 +84,7 @@ function cropToAspect(width: number, height: number, aspect: number) {
 }
 
 function megapixels(width: number, height: number) {
-  return `${(width * height / 1_000_000).toFixed(1)} МП`;
+  return `${(width * height / 1_000_000).toFixed(1)} MP`;
 }
 
 function signedStops(value: number) {
@@ -198,7 +198,7 @@ function estimateSpotExposure(video: HTMLVideoElement, point: MeterPoint) {
 function canvasToBlob(canvas: HTMLCanvasElement) {
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
-      (blob) => (blob ? resolve(blob) : reject(new Error("Не удалось создать JPEG"))),
+      (blob) => (blob ? resolve(blob) : reject(new Error("Could not create JPEG"))),
       "image/jpeg",
       0.96,
     );
@@ -265,7 +265,7 @@ export default function Home() {
       setHardwareAppliedBias(0);
 
       if (!navigator.mediaDevices?.getUserMedia) {
-        setMessage("Этот браузер не предоставляет доступ к камере.");
+        setMessage("This browser does not provide camera access.");
         setPhase("error");
         return;
       }
@@ -312,7 +312,7 @@ export default function Home() {
         await video.play();
         setPhase("live");
       } catch (error) {
-        const detail = error instanceof Error ? error.message : "Доступ отклонён";
+        const detail = error instanceof Error ? error.message : "Camera access was denied";
         setMessage(detail);
         setPhase("error");
       }
@@ -452,7 +452,7 @@ export default function Home() {
       const id = `${Date.now()}-${Math.random()}`;
       const timeout = window.setTimeout(() => {
         worker.terminate();
-        reject(new Error("Проявка заняла слишком много времени"));
+        reject(new Error("Development took too long"));
       }, 90_000);
 
       worker.onmessage = (event: MessageEvent<WorkerResult>) => {
@@ -460,7 +460,7 @@ export default function Home() {
         window.clearTimeout(timeout);
         worker.terminate();
         if (event.data.type === "error" || !event.data.buffer) {
-          reject(new Error(event.data.message || "Ошибка проявки"));
+          reject(new Error(event.data.message || "Development failed"));
           return;
         }
         resolve(new Uint8ClampedArray(event.data.buffer));
@@ -468,7 +468,7 @@ export default function Home() {
       worker.onerror = () => {
         window.clearTimeout(timeout);
         worker.terminate();
-        reject(new Error("Модуль проявки не запустился"));
+        reject(new Error("The development engine did not start"));
       };
 
       const buffer = imageData.data.buffer as ArrayBuffer;
@@ -516,7 +516,7 @@ export default function Home() {
         }
       }
 
-      if (!sourceWidth || !sourceHeight) throw new Error("Камера ещё не готова");
+      if (!sourceWidth || !sourceHeight) throw new Error("The camera is not ready yet");
 
       const frame = frameRef.current;
       const frameAspect = frame && frame.clientHeight
@@ -541,7 +541,7 @@ export default function Home() {
         willReadFrequently: true,
       });
       const resultContext = resultCanvas.getContext("2d", { alpha: false });
-      if (!sourceContext || !resultContext) throw new Error("Canvas недоступен");
+      if (!sourceContext || !resultContext) throw new Error("Canvas is unavailable");
 
       sourceContext.drawImage(
         source,
@@ -591,7 +591,7 @@ export default function Home() {
       setPhase("result");
     } catch (error) {
       bitmap?.close();
-      setMessage(error instanceof Error ? error.message : "Снимок не проявился");
+      setMessage(error instanceof Error ? error.message : "The frame could not be developed");
       setPhase("error");
     }
   }
@@ -644,10 +644,10 @@ export default function Home() {
 
         <div className={`phaseBadge phase-${phase}`} aria-live="polite">
           <i />
-          {phase === "live" && "КАМЕРА"}
-          {phase === "developing" && "ПРОЯВКА"}
-          {phase === "result" && "ГОТОВО"}
-          {(phase === "request" || phase === "error") && "ОЖИДАНИЕ"}
+          {phase === "live" && "CAMERA"}
+          {phase === "developing" && "DEVELOPING"}
+          {phase === "result" && "READY"}
+          {(phase === "request" || phase === "error") && "STANDBY"}
         </div>
 
         <button
@@ -655,13 +655,13 @@ export default function Home() {
           type="button"
           onClick={() => void switchCamera()}
           disabled={phase === "developing"}
-          aria-label="Переключить камеру"
+          aria-label="Switch camera"
         >
           ↻
         </button>
       </header>
 
-      <section className="cameraStage" aria-label="Видоискатель 35 миллиметров">
+      <section className="cameraStage" aria-label="35 mm viewfinder">
         <div className="filmGate" ref={frameRef}>
           <video
             ref={videoRef}
@@ -675,14 +675,14 @@ export default function Home() {
           <canvas
             ref={sourceCanvasRef}
             className={`captureCanvas sourceCanvas ${resultVisible ? "visible" : ""}`}
-            aria-label="Исходный снимок"
+            aria-label="Original frame"
           />
           <canvas
             ref={resultCanvasRef}
             className={`captureCanvas resultCanvas ${
               phase === "result" && !comparing ? "visible" : ""
             }`}
-            aria-label="Проявленный снимок"
+            aria-label="Developed frame"
           />
 
           <div className="viewfinderShade" aria-hidden="true" />
@@ -695,7 +695,7 @@ export default function Home() {
               <button
                 className="meteringSurface"
                 type="button"
-                aria-label="Выбрать точку фокуса и экспозамера"
+                aria-label="Select focus and exposure point"
                 onPointerDown={(event) => {
                   const bounds = event.currentTarget.getBoundingClientRect();
                   meterFromViewPoint(
@@ -719,9 +719,9 @@ export default function Home() {
 
               {!meterPoint && (
                 <div className="meterHint" aria-hidden="true">
-                  {meteringAvailability === "checking" && "ПРОВЕРКА КАМЕРЫ"}
-                  {meteringAvailability === "hardware" && "ТАП · ФОКУС / ЗАМЕР"}
-                  {meteringAvailability === "software" && "ТАП · ТОЧЕЧНЫЙ ЗАМЕР"}
+                  {meteringAvailability === "checking" && "CHECKING CAMERA"}
+                  {meteringAvailability === "hardware" && "TAP · FOCUS / METER"}
+                  {meteringAvailability === "software" && "TAP · SPOT METER"}
                 </div>
               )}
 
@@ -754,7 +754,7 @@ export default function Home() {
                         step={meterBiasRange.step}
                         value={meterBias}
                         onChange={(event) => changeMeterBias(Number(event.target.value))}
-                        aria-label="Коррекция экспозиции выбранной точки"
+                        aria-label="Selected-point exposure compensation"
                       />
                     </span>
                     <output>AE {signedStops(meterBias)}</output>
@@ -767,14 +767,14 @@ export default function Home() {
           {(phase === "request" || phase === "error") && (
             <div className="permissionCard">
               <div className="apertureMark" aria-hidden="true"><i /></div>
-              <p className="eyebrow">ЛОКАЛЬНАЯ КАМЕРА</p>
-              <h1>{phase === "error" ? "Камера недоступна" : "Разрешите доступ к камере"}</h1>
+              <p className="eyebrow">LOCAL CAMERA</p>
+              <h1>{phase === "error" ? "Camera unavailable" : "Allow camera access"}</h1>
               <p>
-                Снимок проявляется прямо в браузере и никуда не загружается.
+                Your photo is developed in the browser and never uploaded.
               </p>
               {message && <small>{message}</small>}
               <button type="button" onClick={() => void startCamera(facing)}>
-                Включить камеру
+                Enable camera
               </button>
             </div>
           )}
@@ -782,8 +782,8 @@ export default function Home() {
           {phase === "developing" && (
             <div className="developingCard" aria-live="assertive">
               <div className="developingRing"><i /></div>
-              <p>ПРОЯВЛЯЕМ НЕГАТИВ</p>
-              <span>тон · цвет · зерно · гало</span>
+              <p>DEVELOPING NEGATIVE</p>
+              <span>tone · color · grain · halation</span>
             </div>
           )}
 
@@ -792,7 +792,7 @@ export default function Home() {
               <span>{selectedStock.name}</span>
               {meta && (
                 <small>
-                  {meta.source === "photo" ? "FULL PHOTO" : "VIDEO FALLBACK"} · {megapixels(meta.outputWidth, meta.outputHeight)} · {(meta.elapsedMs / 1000).toFixed(1)} c
+                  {meta.source === "photo" ? "FULL PHOTO" : "VIDEO FALLBACK"} · {megapixels(meta.outputWidth, meta.outputHeight)} · {(meta.elapsedMs / 1000).toFixed(1)} s
                 </small>
               )}
             </div>
@@ -801,9 +801,9 @@ export default function Home() {
       </section>
 
       {phase === "live" && (
-        <section className="liveControls" aria-label="Настройки плёнки">
+        <section className="liveControls" aria-label="Film settings">
           <label className="stockPicker">
-            <span>ЭМУЛЬСИЯ</span>
+            <span>EMULSION</span>
             <select value={stockId} onChange={(event) => setStockId(event.target.value as StockId)}>
               {STOCKS.map((stock) => (
                 <option key={stock.id} value={stock.id}>
@@ -822,23 +822,23 @@ export default function Home() {
         {phase === "live" && (
           <>
             <button className="textButton" type="button" onClick={() => setSettingsOpen(true)}>
-              НАСТРОЙКИ
+              SETTINGS
             </button>
-            <button className="shutter" type="button" onClick={() => void takePicture()} aria-label="Сделать снимок">
+            <button className="shutter" type="button" onClick={() => void takePicture()} aria-label="Take photo">
               <span />
             </button>
-            <div className="frameCounter" aria-label={`Плёнка ISO ${selectedStock.iso}`}>
+            <div className="frameCounter" aria-label={`Film ISO ${selectedStock.iso}`}>
               <span>ISO</span>
               <strong>{selectedStock.iso}</strong>
             </div>
           </>
         )}
 
-        {phase === "developing" && <p className="processingNote">Не закрывайте камеру</p>}
+        {phase === "developing" && <p className="processingNote">Keep the camera open</p>}
 
         {phase === "result" && (
           <>
-            <button className="actionButton muted" type="button" onClick={retake}>Переснять</button>
+            <button className="actionButton muted" type="button" onClick={retake}>Retake</button>
             <button
               className="actionButton compareButton"
               type="button"
@@ -851,11 +851,11 @@ export default function Home() {
               }}
               onKeyUp={() => setComparing(false)}
             >
-              {comparing ? "Исходник" : "Сравнить"}
+              {comparing ? "Original" : "Compare"}
             </button>
-            <button className="actionButton primary" type="button" onClick={() => void savePhoto()}>Сохранить</button>
+            <button className="actionButton primary" type="button" onClick={() => void savePhoto()}>Save</button>
             {canShare && (
-              <button className="actionButton share" type="button" onClick={() => void sharePhoto()}>Поделиться</button>
+              <button className="actionButton share" type="button" onClick={() => void sharePhoto()}>Share</button>
             )}
           </>
         )}
@@ -868,30 +868,30 @@ export default function Home() {
             <header>
               <div>
                 <p className="eyebrow">35 MM PROCESS</p>
-                <h2 id="settings-title">Параметры проявки</h2>
+                <h2 id="settings-title">Development settings</h2>
               </div>
-              <button className="closeButton" type="button" onClick={() => setSettingsOpen(false)} aria-label="Закрыть">×</button>
+              <button className="closeButton" type="button" onClick={() => setSettingsOpen(false)} aria-label="Close">×</button>
             </header>
 
             <label className="rangeControl">
-              <span><b>Экспозиция плёнки</b><output>{signedStops(exposure)} EV</output></span>
+              <span><b>Film exposure</b><output>{signedStops(exposure)} EV</output></span>
               <input type="range" min="-2" max="2" step="0.1" value={exposure} onChange={(event) => setExposure(Number(event.target.value))} />
-              <small>Меняет экспозицию до характеристической кривой плёнки.</small>
+              <small>Adjusts exposure before the film response curve is applied.</small>
             </label>
 
             <label className="rangeControl">
-              <span><b>Зерно</b><output>{grain}%</output></span>
+              <span><b>Grain</b><output>{grain}%</output></span>
               <input type="range" min="0" max="160" step="5" value={grain} onChange={(event) => setGrain(Number(event.target.value))} />
-              <small>Размер зерна привязан к виртуальному кадру 36 × 24 мм.</small>
+              <small>Grain size is tied to a virtual 36 × 24 mm frame.</small>
             </label>
 
             <label className="rangeControl">
               <span><b>Halation</b><output>{halation}%</output></span>
               <input type="range" min="0" max="160" step="5" value={halation} onChange={(event) => setHalation(Number(event.target.value))} />
-              <small>Красно-оранжевое рассеивание вокруг сильных источников света.</small>
+              <small>Red-orange light spread around strong highlights.</small>
             </label>
 
-            <button className="sheetDone" type="button" onClick={() => setSettingsOpen(false)}>Готово</button>
+            <button className="sheetDone" type="button" onClick={() => setSettingsOpen(false)}>Done</button>
           </section>
         </div>
       )}

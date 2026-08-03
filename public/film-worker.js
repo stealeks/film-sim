@@ -368,10 +368,10 @@ self.onmessage = (event) => {
     const stock = STOCKS[payload.stockId] || STOCKS["gold-200"];
     const source = new Uint8ClampedArray(payload.buffer);
     if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) {
-      throw new Error("Некорректный размер кадра");
+      throw new Error("Invalid frame dimensions");
     }
     if (source.length !== width * height * 4) {
-      throw new Error("Кадр повреждён");
+      throw new Error("The frame data is corrupted");
     }
 
     const controls = {
@@ -388,7 +388,7 @@ self.onmessage = (event) => {
     self.postMessage({
       type: "error",
       id: payload.id,
-      message: error instanceof Error ? error.message : "Неизвестная ошибка проявки",
+      message: error instanceof Error ? error.message : "Unknown development error",
     });
   }
 };
